@@ -1,0 +1,121 @@
+service: logcatcher
+
+provider:
+  name: aws
+  stage: prod
+  runtime: python3.6
+  region: us-east-1
+
+resources:
+  Resources:
+    LogCatcherRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /logcatcher/
+        RoleName: LogCatcherRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: LogCatcherPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - sqs:ListQueues
+                    - sqs:ListQueueTags
+                    - sqs:GetQueueUrl
+                    - sqs:GetQueueAttributes
+                    - sqs:SendMessage
+                    - sqs:SendMessagebatch
+                    - sqs:ChangeMessageVisibility
+                    - sqs:ChangeMessageVisibilityBatch
+                  Resource:
+                    Fn::GetAtt:
+                      - Logs
+                      - Arn
+          - PolicyName: LogCatcherLoggingPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    Fn::GetAtt:
+                      - LogCatcherLogGroup
+                      - Arn
+          - PolicyName: CloudwatchLoggerPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - logs:DescribeLogStreams
+                  Resource:
+                    Fn::GetAtt:
+                      - CloudwatchLoggerLogGroup
+                      - Arn
+
+    Logs:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: Logs.fifo
+        MessageRetentionPeriod: 600
+        VisibilityTimeout: 1
+        FifoQueue: true
+        ContentBasedDeduplication: true
+
+    CloudwatchLoggerLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: CloudLogger
+        RetentionInDays: 1
+
+    LogCatcherLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/LogCatcher
+        RetentionInDays: 1
+
+package:
+  individually: true
+
+functions:
+  LogCatcher:
+    handler: LogCatcher.lambda_handler
+    module: .
+    description: Receive logs as they come in and post them to the Logs.fifo SQS queue
+    memorySize: 128
+    name: LogCatcher
+    timeout: 30
+    role:
+      Fn::GetAtt:
+        - LogCatcherRole
+        - Arn
+    package:
+      exclude:
+        - "**"
+        - "!LogCatcher.py"
+    events:
+      - http:
+          path: logs
+          method: post
+      - http:
+          path: logs/{destination}
+          method: post
+
+plugins:
+  - serverless-python-requirements
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux

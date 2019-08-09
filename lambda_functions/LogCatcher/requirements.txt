@@ -1,0 +1,2 @@
+-i https://pypi:Pentair1@pypi.pentair.io
+CloudLogger==0.0.2
