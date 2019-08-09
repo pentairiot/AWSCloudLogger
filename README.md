@@ -34,7 +34,7 @@ POST /logs/{destination}
 Consuming log messages can be done via the Cloudwatch interface, or if using SQS, via the Python REPL. Consuming a message deletes it from the SQS queue.
 
 ```
-from CloudLogger import SQSLogger
+from SQSLogger import SQSLogger
 sl = SQSLogger()
 sl.consume([name])
 ```
