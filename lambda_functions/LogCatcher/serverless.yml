@@ -4,7 +4,7 @@ provider:
   name: aws
   stage: prod
   runtime: python3.6
-  region: us-east-1
+  region: us-west-2
 
 resources:
   Resources:
@@ -78,7 +78,7 @@ resources:
     CloudwatchLoggerLogGroup:
       Type: AWS::Logs::LogGroup
       Properties:
-        LogGroupName: CloudLogger
+        LogGroupName: GDB
         RetentionInDays: 1
 
     LogCatcherLogGroup:
@@ -106,6 +106,8 @@ functions:
       exclude:
         - "**"
         - "!LogCatcher.py"
+    environment:
+      GROUP_NAME: 'GDB'
     events:
       - http:
           path: logs

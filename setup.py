@@ -7,7 +7,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='AWSCloudLogger',
-    version='0.0.1',
+    version='0.0.2',
     author='PentairIoT',
     author_email='pentairiot@gmail.com',
     description='Lambda function and Library for writing and reading logs to and from SQS or CloudWatch',

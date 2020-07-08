@@ -4,9 +4,9 @@ from datetime import datetime
 
 
 class CloudwatchLogHandler(logging.Handler):
-    def __init__(self, stream_name, level):
+    def __init__(self, stream_name, level, group_name):
         logging.Handler.__init__(self, level)
-        self.group_name = 'CloudLogger'
+        self.group_name = group_name
         self.stream_name = stream_name
         self.client = boto3.client('logs')
 
@@ -33,12 +33,12 @@ class CloudwatchLogHandler(logging.Handler):
 
 
 class CloudwatchLogger:
-    def __init__(self, stream_name):
-        self.group_name = 'CloudLogger'
+    def __init__(self, stream_name, group_name):
+        self.group_name = group_name
         self.stream_name = stream_name
         self.client = boto3.client('logs')
         self.logger = logging.getLogger("Cloudwatch")
-        handler = CloudwatchLogHandler(self.stream_name, logging.INFO)
+        handler = CloudwatchLogHandler(self.stream_name, logging.INFO, self.group_name)
         handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s: %(message)s', '%Y-%m-%d %H:%M:%S'))
         self.logger.setLevel(10)
         # lambda loggers can persist through separate executions so clear out the handlers to prevent duplicates
